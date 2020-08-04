@@ -1,7 +1,7 @@
 import ViewStep from '@zonesoundcreative/view-step';
 import $ from 'jquery';
 import Player from '@zonesoundcreative/web-player';
-import {freeTimeRef, connectRef, percentRef} from './firebase';
+import {freeTimeRef, lengthRef, connectRef, percentRef} from './firebase';
 import NoSleep from 'nosleep.js';
 import testSound from './test.mp3';
 import emptySound from './sound/empty.aif';
@@ -21,6 +21,7 @@ let player = new Player(emptySound);
 let playList = [testSound, testSound];
 let players = [];
 let freeTimeout = null;
+let endTimeout = null;
 
 //other
 var noSleep = new NoSleep();
@@ -41,32 +42,32 @@ $('#start').click(function() {
 
 $('.players').click(function() {
     noSleep.enable();
-    if (playerid != 0) updateConnect(1); 
-    playerid = $(this).attr('id').split('-')[1]
-    playerStart();
-    
-})
-
-function playerStart() {
+    if (playerid != 0) {
+        players[playerid-1].pause();
+        updateConnect(-1); 
+    }
+    playerid = $(this).attr('id').split('-')[1];
     $('.players').attr('disabled', true);
     updateConnect(1);
     if (player.loaded && isConnect) { //change to self player
         console.log('asking......');
         socket.emit('ask', {});
     }
-}
+})
 
 function play(time) {
     if (playerid <= 0) return;
     console.log(players[playerid-1], playerid, time);
     //player.play(time);
     players[playerid-1].play(time);
-    if (time <= 30) {
+    if (time <= freeTime) {
         $('.players').attr('disabled', false);
         $('#player-'+playerid).attr('disabled', true);
+        //check for change 
+        freeTimeout = setTimeout(stopFreeChange, (freeTime-time)*1000);
     }
-    //check for change 
-    freeTimeout = setTimeout(stopFreeChange, (freeTime-time)*1000);
+    endTimeout = setTimeout(reachEnd, (length-time)*1000);
+    
 }
 
 function pause() {
@@ -77,18 +78,24 @@ function pause() {
         clearTimeout(freeTimeout);
         freeTimeout = null;
     }
+    if (endTimeout) {
+        clearTimeout(endTimeout);
+        endTimeout = null;
+    }
 }
 
 function stopFreeChange() {
     $('.players').attr('disabled', true);
     freeTimeout = null;
-    //set end timeout?
-    /*
-    noSleep.disable();
+}
+
+function reachEnd() {
     console.log('end!');
+    noSleep.disable();
+    $('.players').attr('disabled', false);
     updateConnect(-1);
     playerid = 0;
-    */
+    endTimeout = null;
 }
 
 
@@ -102,6 +109,10 @@ function initSoundList() {
 //firebase read data here
 freeTimeRef.on('value', (t)=> {
     freeTime = t.val();
+})
+
+lengthRef.on('value', (t)=> {
+    length = t.val();
 })
 
 percentRef.on('value', (pr) => {
