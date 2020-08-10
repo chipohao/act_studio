@@ -6,18 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
   <script src='https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.10.2/p5.min.js'></script>
 </head>
 <body class="container">
 
-    <div id="mainpage" class='step-1'>
+  <div id="mainpage" class='step-1'>
 		<p>introduction here</p>
 		<button id="start" type="button" class="btn btn-block btn-light">START</button>
 	</div>
-	<!-- <div id="loading" class='step-2'>
-		
-	</div> -->
-    <div id="menupage" class='step-2' style="display: none;">
+	<div id="loading" class='step-2' style="display: none;">
+    <div id="loading-content">
+      <span class="loader"></span>
+      loading ...
+    </div>
+	</div>
+    <div id="menupage" class='step-3' style="display: none;">
       <button id="player-1" type="button" class="btn btn-block btn-light players">player1</button>
       <button id="player-2" type="button" class="btn btn-block btn-light players">player2</button>
     </div>
