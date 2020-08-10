@@ -9,6 +9,7 @@ import io from 'socket.io-client';
 import { socketServer } from './config';
 import './loader.css';
 
+
 //socket use
 var socket = io(socketServer);
 let isConnect = false;
@@ -19,8 +20,7 @@ let conDisable = [];
 
 //player
 let playerid = 0;
-let player = new Player(emptySound, ()=>{console.log('loaded!!!!!')});
-//let player = new Player({url: emptySound, onload: ()=>{console.log('loaded!!!!!')}})
+let player = new Player(emptySound);
 let playList = [testSound, testSound];
 let players = [];
 let freeTimeout = null;
@@ -28,7 +28,7 @@ let endTimeout = null;
 
 //other
 var noSleep = new NoSleep();
-let viewStep = new ViewStep('.step', 1, 2, {
+let viewStep = new ViewStep('.step', 1, 3, {
     2: loading, 
     3: initSoundList
 });
@@ -39,15 +39,15 @@ for (let i=0; i<playList.length; i++) {
 }
 
 $('#start').click(function() {
-   viewStep.showNext();
-   console.log('start: loaded?', player.loaded);
+    viewStep.showNext();
+    console.log('start: loaded?', player.loaded);
     if (player.loaded) { //change to self player
         player.play();
     }
 })
 
 $('.players').click(function() {
-    console.log('click', playerid);
+
     noSleep.enable();
     if (playerid != 0) {
         players[playerid-1].pause();
@@ -62,10 +62,8 @@ $('.players').click(function() {
 })
 
 function play(time) {
-    console.log('play!');
     if (playerid <= 0) return;
     console.log(players[playerid-1], playerid, time);
-    //player.play(time);
     players[playerid-1].play(time);
     if (time <= freeTime) {
         soundChangeable();
