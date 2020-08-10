@@ -32,7 +32,7 @@ module.exports = {
 				name: '[name].[ext]',
 			}
 		},{
-			test: /\.(mp3|aif)$/,
+			test: /\.(mp3|wav|aif)$/,
 			exclude: /(node_modules|bower_components)/,
 			loader: 'file-loader?name=[name].[ext]'
 		}]
