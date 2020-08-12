@@ -8,8 +8,8 @@ import emptySound from './sound/empty.wav';
 import io from 'socket.io-client';
 import { socketServer } from './config';
 import './loader.css';
-
-
+import './style.css';
+import './style.js';
 //socket use
 var socket = io(socketServer);
 let isConnect = false;
