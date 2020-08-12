@@ -25,16 +25,16 @@ module.exports = {
 			use: ['style-loader', 'css-loader'],
 		},
 		{
-			test: /\.(png|jpe?g|gif|mid)$/i,
-			loader: 'file-loader',
-			options: {
-				// 配置 name 屬性 (第二步)
-				name: '[name].[ext]',
-			}
-		},{
 			test: /\.(mp3|wav|aif)$/,
 			exclude: /(node_modules|bower_components)/,
 			loader: 'file-loader?name=[name].[ext]'
+		},{
+			test: /\.(png|jpg)$/,
+			loader: 'url-loader?limit=8192'
+		}, 
+		{
+			test: /\.(png|jpg)$/,
+			loader: 'image-webpack-loader'
 		}]
 	},
 	plugins: [
