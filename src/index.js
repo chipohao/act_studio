@@ -4,38 +4,69 @@ import Player from '@zonesoundcreative/web-player';
 import {freeTimeRef, lengthRef, connectRef, percentRef} from './firebase';
 import NoSleep from 'nosleep.js';
 import testSound from './test.mp3';
+import ballSound from './sound/ball.mp3';
 import emptySound from './sound/empty.wav';
+import aTrack from './sound/A.wav';
+import bTrack from './sound/B.wav';
+import cTrack from './sound/C.wav';
 import io from 'socket.io-client';
 import { socketServer } from './config';
 import './loader.css';
 import './style.css';
-import './style.js';
+//import './style.js';
+import queryString from 'query-string';
+
+
+
 //socket use
 var socket = io(socketServer);
 let isConnect = false;
 
 //firebase
-let freeTime, length, connect = {}, percent = {};
+let freeTime, length, percent = {};
 let conDisable = [];
 
 //player
 let playerid = 0;
-let player = new Player(emptySound);
-let playList = [testSound, testSound];
-let players = [];
+var player = new Player(emptySound, ()=>{console.log('loaded')});
+var playList = [aTrack, bTrack, cTrack];
+//var player;
+var players = [];
+let change = true;
 let freeTimeout = null;
 let endTimeout = null;
-
+let page;
 //other
 var noSleep = new NoSleep();
-let viewStep = new ViewStep('.step', 1, 3, {
-    2: loading, 
-    3: initSoundList
+let viewStep = new ViewStep('.step', 2, 3, {
+     2: loading,
 });
+//2: loading,
 
-for (let i=0; i<playList.length; i++) {
-    players.push(new Player(playList[i], ()=>{console.log('player num'+i+'loaded')}));
-    conDisable.push(true);
+initPage();
+function initPage() {
+    const parsed = queryString.parse(location.search);
+    page = parseInt(parsed.page);
+    if (page > playList.length) page = undefined;
+    Promise.all(Array.from(document.images).filter(img => !img.complete).map(img => new Promise(resolve => { img.onload = img.onerror = resolve; }))).then(() => {
+        console.log('images finished loading');
+        viewStep.showPrev();
+    });
+
+    //init page
+    if (page) {
+        players.push(new Player(playList[page-1], ()=>{console.log('player num'+(page-1)+'loaded')}));
+        $("#menuinner").append(`<button id="player-${page}" type="button" class="btn btn-block btn-dark players">音軌</button>
+            `);
+    } else {
+        for (let i=0; i<playList.length; i++) {
+            players.push(new Player(playList[i], ()=>{console.log('player num'+i+'loaded')}));
+            $("#menuinner").append(`<button id="player-${i+1}" type="button" class="btn btn-block btn-dark players">${String.fromCharCode('A'.charCodeAt(0)+i)} 軌</button>
+            `);
+            conDisable.push(true);
+        }
+    }
+    
 }
 
 $('#start').click(function() {
@@ -47,39 +78,44 @@ $('#start').click(function() {
 })
 
 $('.players').click(function() {
-
+    console.log('play!', player);
     noSleep.enable();
-    if (playerid != 0) {
+    if (playerid != 0) { // playing
         players[playerid-1].pause();
-        updateConnect(-1); 
+        if (!page) updateConnect(-1); 
     }
     playerid = $(this).attr('id').split('-')[1];
     $('.players').attr('disabled', true);
-    updateConnect(1);
-    if (players[playerid-1].loaded && isConnect) { //change to self player
-        socket.emit('ask', {});
-    }
+    if (!page) updateConnect(1);
+    socket.emit('ask', {});
 })
 
 function play(time) {
+    
     if (playerid <= 0) return;
-    console.log(players[playerid-1], playerid, time);
-    players[playerid-1].play(time);
+
+    if (page) players[0].play(time);
+    else players[playerid-1].play(time);
+
     if (time <= freeTime) {
+        change = true;
         soundChangeable();
         //check for change 
         freeTimeout = setTimeout(stopFreeChange, (freeTime-time)*1000);
     } else {
+        change = false;
         $('.players').attr('disabled', true);
     }
     endTimeout = setTimeout(reachEnd, (length-time)*1000);
-    
+
 }
 
 function pause() {
     if (playerid <= 0) return;
-    console.log(players[playerid-1], playerid);
-    players[playerid-1].pause();
+    change = true;
+    if (page) players[0].pause();
+    else players[playerid-1].pause();
+
     if (freeTimeout) {
         clearTimeout(freeTimeout);
         freeTimeout = null;
@@ -99,21 +135,27 @@ function soundChangeable() {
 }
 
 function stopFreeChange() {
+    change = false;
     console.log('stopFree!');
     $('.players').attr('disabled', true);
     freeTimeout = null;
 }
 
 function reachEnd() {
+    change = true;
+    $('.players').attr('disabled', false);
     console.log('end!');
     noSleep.disable();
-    $('.players').attr('disabled', false);
-    updateConnect(-1);
+    if(!page) updateConnect(-1);
     playerid = 0;
     endTimeout = null;
+    player.pause();
+    viewStep.showPrev();
+    viewStep.showPrev(true, true);
 }
 
 function loading() {
+    //initSoundList();
     intervalCheck();
 }
 
@@ -122,21 +164,14 @@ function intervalCheck() {
         setTimeout(intervalCheck, 500);
         return;
     }
-    for (let i=0; i<playList; i++) {
-        if (!playList[i].loaded) {
+    for (let i=0; i<players.length; i++) {
+        if (!players[i].loaded) {
             setTimeout(intervalCheck, 500);
             return;
         }
     }
     viewStep.showNext();
 }
-
-function initSoundList() {
-    console.log('initSoundList', player.loaded);
-    //connect to socket and 
-    // ask socket which sound is available
-}
-
 
 //firebase read data here
 freeTimeRef.on('value', (t)=> {
@@ -155,26 +190,29 @@ percentRef.on('value', (pr) => {
     console.log('percent', percent);
 });
 
-connectRef.on('value', (cr) => {
-    if (playerid == 0) return;
+function calcConnect(cr) {
     let total = 0;
     cr.forEach((e)=>{
+        if (e.key == 0) return;
         total += e.val();
-        connect[e.key] = e.val();
-        //console.log(e, e.key);
     });
     if (total == 0) return;
     cr.forEach((e)=>{
         if (parseInt(e.val())/total > percent[e.key]) {
             console.log(e.key, true);
             conDisable[e.key-1] = true;
-            $("#player-"+e.key).attr('disabled', true);
+            if (change) $("#player-"+e.key).attr('disabled', true);
         } else {
             console.log(e.key, false);
             conDisable[e.key-1] = false;
-            $("#player-"+e.key).attr('disabled', false);
+            if (change && playerid != e.key) $("#player-"+e.key).attr('disabled', false);
         }
     })
+}
+
+connectRef.on('value', (cr) => {
+    if (page) return;
+    calcConnect(cr);
 });
 
 function updateConnect(off){
@@ -186,7 +224,7 @@ function updateConnect(off){
 
 //window handling before unload
 $(window).bind("beforeunload", function() { 
-    if (playerid) updateConnect(-1);
+    if (playerid && !page) updateConnect(-1);
     //return inFormOrLink ? "Do you really want to close?" : null; 
 })
 
