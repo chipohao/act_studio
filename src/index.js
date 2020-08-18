@@ -129,8 +129,10 @@ function pause() {
 
 function soundChangeable() {
     for (let i=0; i<conDisable.length; i++) {
+        console.log(i, conDisable[i]);
         $('#player-'+(i+1)).attr('disabled', conDisable[i]);
     }
+    console.log(playerid, true);
     $('#player-'+playerid).attr('disabled', true);
 }
 
@@ -164,12 +166,20 @@ function intervalCheck() {
         setTimeout(intervalCheck, 500);
         return;
     }
-    for (let i=0; i<players.length; i++) {
-        if (!players[i].loaded) {
+    if (page) {
+        if (!players[0].loaded) {
             setTimeout(intervalCheck, 500);
             return;
         }
+    } else {
+        for (let i=0; i<players.length; i++) {
+            if (!players[i].loaded) {
+                setTimeout(intervalCheck, 500);
+                return;
+            }
+        }
     }
+    
     viewStep.showNext();
 }
 
