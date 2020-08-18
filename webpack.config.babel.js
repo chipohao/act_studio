@@ -4,10 +4,14 @@ var HtmlWebpackPlugin = require('html-webpack-plugin')
 
 
 module.exports = {
-	entry: ['./src/index.js'], 
+	entry: {
+		app: './src/index.js',
+		adminApp: './src/admin.js'
+	}, 
 	output: {
 		path: path.join(__dirname, 'dist'),
 		filename: '[name].bundle.js',
+		chunkFilename: '[id].bundle_[chunkhash].js',
 	},
 	externals: {
 		"p5": "p5"
@@ -40,7 +44,14 @@ module.exports = {
 	plugins: [
 		new webpack.optimize.OccurrenceOrderPlugin(),
 		new HtmlWebpackPlugin({
-		template: './index.html'
+			filename: 'index.html',
+			chunks: ['app'],
+			template: './index.html'
+		}),
+		new HtmlWebpackPlugin({
+			filename: 'control.html',
+			chunks: ['adminApp'],
+			template: './control.html'
 		})
 	],
 	optimization: {
