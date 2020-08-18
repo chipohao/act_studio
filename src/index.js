@@ -1,18 +1,18 @@
+import './loader.css';
+import './style.css';
+
 import ViewStep from '@zonesoundcreative/view-step';
 import $ from 'jquery';
 import Player from '@zonesoundcreative/web-player';
 import {freeTimeRef, lengthRef, connectRef, percentRef} from './firebase';
 import NoSleep from 'nosleep.js';
-import testSound from './test.mp3';
-import ballSound from './sound/ball.mp3';
 import emptySound from './sound/empty.wav';
 import aTrack from './sound/A.wav';
 import bTrack from './sound/B.wav';
 import cTrack from './sound/C.wav';
 import io from 'socket.io-client';
 import { socketServer } from './config';
-import './loader.css';
-import './style.css';
+
 //import './style.js';
 import queryString from 'query-string';
 
