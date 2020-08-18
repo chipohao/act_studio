@@ -7,9 +7,9 @@ import Player from '@zonesoundcreative/web-player';
 import {freeTimeRef, lengthRef, connectRef, percentRef} from './firebase';
 import NoSleep from 'nosleep.js';
 import emptySound from './sound/empty.wav';
-import aTrack from './sound/A.wav';
-import bTrack from './sound/B.wav';
-import cTrack from './sound/C.wav';
+import aTrack from './sound/A.mp3';
+import bTrack from './sound/B.mp3';
+import cTrack from './sound/C.mp3';
 import io from 'socket.io-client';
 import { socketServer } from './config';
 
