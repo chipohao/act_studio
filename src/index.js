@@ -41,6 +41,8 @@ var noSleep = new NoSleep();
 let viewStep = new ViewStep('.step', 2, 3, {
      2: loading,
 });
+let finish = 0;
+let waitLoading = false;
 //2: loading,
 
 initPage();
@@ -55,12 +57,20 @@ function initPage() {
 
     //init page
     if (page) {
-        players.push(new Player(playList[page-1], ()=>{console.log('player num'+(page-1)+'loaded')}));
+        players.push(new Player(playList[page-1], ()=>{
+            console.log('player num'+(page-1)+'loaded');
+            finish ++;
+            if (waitLoading) intervalCheck();
+        }));
         $("#menuinner").append(`<button id="player-${page}" type="button" class="btn btn-block btn-dark players">音軌</button>
             `);
     } else {
         for (let i=0; i<playList.length; i++) {
-            players.push(new Player(playList[i], ()=>{console.log('player num'+i+'loaded')}));
+            players.push(new Player(playList[i], ()=>{
+                console.log('player num'+i+'loaded');
+                finish ++;
+                if (waitLoading) intervalCheck();
+            }));
             $("#menuinner").append(`<button id="player-${i+1}" type="button" class="btn btn-block btn-dark players">${String.fromCharCode('A'.charCodeAt(0)+i)} 軌</button>
             `);
             conDisable.push(true);
@@ -157,29 +167,32 @@ function reachEnd() {
 }
 
 function loading() {
+    waitLoading = true;
     //initSoundList();
     intervalCheck();
 }
 
 function intervalCheck() {
     if (!isConnect) {
-        setTimeout(intervalCheck, 500);
+        //setTimeout(intervalCheck, 500);
         return;
     }
     if (page) {
-        if (!players[0].loaded) {
-            setTimeout(intervalCheck, 500);
-            return;
-        }
+        if (finish < 1) return;
+        // if (!players[0].loaded) {
+        //     setTimeout(intervalCheck, 500);
+        //     return;
+        // }
     } else {
-        for (let i=0; i<players.length; i++) {
-            if (!players[i].loaded) {
-                setTimeout(intervalCheck, 500);
-                return;
-            }
-        }
+        if (finish < players.length) return;
+        // for (let i=0; i<players.length; i++) {
+        //     if (!players[i].loaded) {
+        //         setTimeout(intervalCheck, 500);
+        //         return;
+        //     }
+        // }
     }
-    
+    waitLoading = false;
     viewStep.showNext();
 }
 
@@ -247,6 +260,7 @@ window.onbeforeunload = function () {
 socket.on('connect', (data) => {
     console.log('connect!');
     isConnect = true;
+    if (waitLoading) intervalCheck();
     socket.on('play', (msg)=> {
         console.log('play', msg);
         play(msg.time);
