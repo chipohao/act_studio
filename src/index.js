@@ -40,16 +40,16 @@ let waitLoading = false;
 
 initPage();
 function initPage() {
-    // let parsed = queryString.parse(location.search);
-    // if (parsed.page) {
-    //     page = parseInt(parsed.page);
-    //     if (page > playList.length) page = undefined;
-    // }
-    viewStep.showPrev();
-    // Promise.all(Array.from(document.images).filter(img => !img.complete).map(img => new Promise(resolve => {img.onload = img.onerror = resolve; }))).then(() => {
-    //     console.log('images finished loading');
-    //     viewStep.showPrev();
-    // });
+    let parsed = queryString.parse(location.search);
+    if (parsed.page) {
+        page = parseInt(parsed.page);
+        if (page > playList.length) page = undefined;
+    }
+    //viewStep.showPrev();
+    Promise.all(Array.from(document.images).filter(img => !img.complete).map(img => new Promise(resolve => {img.onload = img.onerror = resolve; }))).then(() => {
+        console.log('images finished loading');
+        viewStep.showPrev();
+    });
 
     //init page
     if (page) {
@@ -104,7 +104,7 @@ function play(time) {
     
     if (playerid <= 0) return;
     //player.play();
-    console.log('change text: playing');
+    //console.log('change text: playing');
     let text = `<span class="playing">播放中</span>`;
     $("#player-"+playerid).html(text);
 
@@ -150,25 +150,22 @@ function pause() {
 function pageOut() {
     viewStep.showPrev();
     viewStep.showPrev(true, true);
-}
-
-function stopFreeChange() {
-    change = false;
-    console.log('stopFree!');
-    $('.players').attr('disabled', true);
-    freeTimeout = null;
+    $('.players').attr('disabled', false);
+    $('#player-'+playerid).html(trackText(playerid));
+    if(!page) updateConnect(-1);
+    playerid = 0;
 }
 
 function reachEnd() {
-    $('.players').attr('disabled', false);
-    console.log($('#player-'+playerid));
-    $('#player-'+playerid).html(trackText(playerid));
+    // $('.players').attr('disabled', false);
+    // console.log($('#player-'+playerid));
+    // $('#player-'+playerid).html(trackText(playerid));
     //console.log('end!');
     noSleep.disable();
-    if(!page) updateConnect(-1);
-    playerid = 0;
     endTimeout = null;
-    player.pause();
+    if (playerid != 0){
+        socket.emit('ask', {});
+    }
 }
 
 function loading() {
@@ -179,21 +176,21 @@ function loading() {
 function intervalCheck() {
     waitLoading = false;
     if (!isConnect) {
-        alert('isConnect'); 
+        //alert('isConnect'); 
         waitLoading = true;
         return;
     }
     if (page && finish < 1) {
-        alert('page');
+        //alert('page');
         waitLoading = true;
         return;
     }
     if ((page==undefined) && finish < players.length) {
-        alert('all');
+        //alert('all');
         waitLoading = true;
         return;
     }
-    alert('ya');
+    //alert('ya');
     viewStep.showNext();
 }
 
@@ -223,14 +220,14 @@ function calcConnect(cr) {
     if (total == 0) return;
     cr.forEach((e)=>{
         if (parseInt(e.val())/total > percent[e.key]) {
-            console.log(e.key, true);
+            //console.log(e.key, true);
             $("#player-"+e.key).attr('disabled', true);
             if (playerid != e.key) {
                 let text = `<span class="full">額滿</span>`;
                 $("#player-"+e.key).html(text);
             }
         } else {
-            console.log(e.key, false);
+            //console.log(e.key, false);
             if (playerid != e.key) {
                 $("#player-"+e.key).attr('disabled', false);
                 $("#player-"+e.key).html(trackText(parseInt(e.key)));
