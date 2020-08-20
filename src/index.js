@@ -1,25 +1,17 @@
 import './loader.css';
 import './style.css';
-
-import ViewStep from '@zonesoundcreative/view-step';
 import $ from 'jquery';
+import ViewStep from '@zonesoundcreative/view-step';
 import Player from '@zonesoundcreative/web-player';
 import {freeTimeRef, lengthRef, connectRef, percentRef} from './firebase';
 import NoSleep from 'nosleep.js';
 import emptySound from './sound/empty.wav';
-import ballSound from './sound/ball.mp3';
-import test from './sound/A-2.mp3';
-
 import aTrack from './sound/A-2.mp3';
 import bTrack from './sound/B-2.mp3';
 import cTrack from './sound/C-2.mp3';
 import io from 'socket.io-client';
 import { socketServer } from './config';
-import Tone from 'tone';
-//import './style.js';
 import queryString from 'query-string';
-
-
 
 //socket use
 var socket = io(socketServer);
@@ -27,21 +19,16 @@ let isConnect = false;
 
 //firebase
 let freeTime, length, percent = {};
-let conDisable = [];
 
 //player
 let playerid = 0;
 const player = new Player(emptySound, ()=>{console.log('loaded')});
-const player2 = new Player(test, ()=>{console.log('loaded2')});
-
-//const player = new Tone.Player(ballSound).toMaster();
 var playList = [aTrack, bTrack, cTrack];
-//var player;
 var players = [];
-let change = true;
 let freeTimeout = null;
 let endTimeout = null;
 let page;
+
 //other
 var noSleep = new NoSleep();
 let viewStep = new ViewStep('.step', 2, 3, {
@@ -53,13 +40,16 @@ let waitLoading = false;
 
 initPage();
 function initPage() {
-    const parsed = queryString.parse(location.search);
-    if (parsed.page) page = parseInt(parsed.page);
-    if (page > playList.length) page = undefined;
-    Promise.all(Array.from(document.images).filter(img => !img.complete).map(img => new Promise(resolve => { img.onload = img.onerror = resolve; }))).then(() => {
-        console.log('images finished loading');
-        viewStep.showPrev();
-    });
+    // let parsed = queryString.parse(location.search);
+    // if (parsed.page) {
+    //     page = parseInt(parsed.page);
+    //     if (page > playList.length) page = undefined;
+    // }
+    viewStep.showPrev();
+    // Promise.all(Array.from(document.images).filter(img => !img.complete).map(img => new Promise(resolve => {img.onload = img.onerror = resolve; }))).then(() => {
+    //     console.log('images finished loading');
+    //     viewStep.showPrev();
+    // });
 
     //init page
     if (page) {
@@ -68,7 +58,8 @@ function initPage() {
             finish ++;
             if (waitLoading) intervalCheck();
         }));
-        $("#menuinner").append(`<button id="player-${page}" type="button" class="btn btn-block btn-dark players">音軌</button>
+        $("#menuinner").append(`
+        <button id="player-${page}" type="button" class="btn btn-block btn-dark players">${trackText(page)}</button>
             `);
     } else {
         for (let i=0; i<playList.length; i++) {
@@ -78,9 +69,9 @@ function initPage() {
                 if (waitLoading) intervalCheck();
             });
             players.push(a);
-            $("#menuinner").append(`<button id="player-${i+1}" type="button" class="btn btn-block btn-dark players">${String.fromCharCode('A'.charCodeAt(0)+i)} 軌</button>
+            $("#menuinner").append(`
+            <button id="player-${i+1}" type="button" class="btn btn-block btn-dark players">${trackText(i+1)}</button>
             `);
-            conDisable.push(true);
         }
     }
     
@@ -100,9 +91,11 @@ $('.players').click(function() {
     if (playerid != 0) { // playing
         players[playerid-1].pause();
         if (!page) updateConnect(-1); 
+        $("#player-"+playerid).html(trackText(playerid));
     }
     playerid = parseInt($(this).attr('id').split('-')[1]);
     $('.players').attr('disabled', true);
+
     if (!page) updateConnect(1);
     socket.emit('ask', {});
 })
@@ -111,6 +104,10 @@ function play(time) {
     
     if (playerid <= 0) return;
     //player.play();
+    console.log('change text: playing');
+    let text = `<span class="playing">播放中</span>`;
+    $("#player-"+playerid).html(text);
+
     if (page) players[0].play(time);
     else {
         //console.log('play'+playerid);
@@ -127,21 +124,16 @@ function play(time) {
     }
 
     if (time <= freeTime) {
-        change = true;
-        soundChangeable();
-        //check for change 
-        freeTimeout = setTimeout(stopFreeChange, (freeTime-time)*1000);
-    } else {
-        change = false;
-        $('.players').attr('disabled', true);
+        freeTimeout = setTimeout(pageOut, (freeTime-time)*1000);
     }
     endTimeout = setTimeout(reachEnd, (length-time)*1000);
-
+    
 }
 
 function pause() {
     if (playerid <= 0) return;
-    change = true;
+    let text = `<span class="playing">等待全員到齊中</span>`;
+    $("#player-"+playerid).html(text);
     if (page) players[0].pause();
     else players[playerid-1].pause();
 
@@ -152,17 +144,12 @@ function pause() {
     if (endTimeout) {
         clearTimeout(endTimeout);
         endTimeout = null;
-    }
-    soundChangeable();
+    }    
 }
 
-function soundChangeable() {
-    for (let i=0; i<conDisable.length; i++) {
-        //console.log(i, conDisable[i]);
-        $('#player-'+(i+1)).attr('disabled', conDisable[i]);
-    }
-    //console.log(playerid, true);
-    $('#player-'+playerid).attr('disabled', true);
+function pageOut() {
+    viewStep.showPrev();
+    viewStep.showPrev(true, true);
 }
 
 function stopFreeChange() {
@@ -173,45 +160,40 @@ function stopFreeChange() {
 }
 
 function reachEnd() {
-    change = true;
     $('.players').attr('disabled', false);
+    console.log($('#player-'+playerid));
+    $('#player-'+playerid).html(trackText(playerid));
     //console.log('end!');
     noSleep.disable();
     if(!page) updateConnect(-1);
     playerid = 0;
     endTimeout = null;
     player.pause();
-    viewStep.showPrev();
-    viewStep.showPrev(true, true);
 }
 
 function loading() {
-    waitLoading = true;
-    //initSoundList();
+    //viewStep.showNext();
     intervalCheck();
 }
 
 function intervalCheck() {
+    waitLoading = false;
     if (!isConnect) {
-        //setTimeout(intervalCheck, 500);
+        alert('isConnect'); 
+        waitLoading = true;
         return;
     }
-    if (page) {
-        if (finish < 1) return;
-        // if (!players[0].loaded) {
-        //     setTimeout(intervalCheck, 500);
-        //     return;
-        // }
-    } else {
-        if (finish < players.length) return;
-        // for (let i=0; i<players.length; i++) {
-        //     if (!players[i].loaded) {
-        //         setTimeout(intervalCheck, 500);
-        //         return;
-        //     }
-        // }
+    if (page && finish < 1) {
+        alert('page');
+        waitLoading = true;
+        return;
     }
-    waitLoading = false;
+    if ((page==undefined) && finish < players.length) {
+        alert('all');
+        waitLoading = true;
+        return;
+    }
+    alert('ya');
     viewStep.showNext();
 }
 
@@ -241,15 +223,24 @@ function calcConnect(cr) {
     if (total == 0) return;
     cr.forEach((e)=>{
         if (parseInt(e.val())/total > percent[e.key]) {
-            //console.log(e.key, true);
-            conDisable[e.key-1] = true;
+            console.log(e.key, true);
             $("#player-"+e.key).attr('disabled', true);
+            if (playerid != e.key) {
+                let text = `<span class="full">額滿</span>`;
+                $("#player-"+e.key).html(text);
+            }
         } else {
-            //console.log(e.key, false);
-            conDisable[e.key-1] = false;
-            if (change && (playerid != e.key)) $("#player-"+e.key).attr('disabled', false);
+            console.log(e.key, false);
+            if (playerid != e.key) {
+                $("#player-"+e.key).attr('disabled', false);
+                $("#player-"+e.key).html(trackText(parseInt(e.key)));
+            }
         }
     })
+}
+
+function trackText(i){
+    return String.fromCharCode('A'.charCodeAt(0)+i-1) + " 軌";
 }
 
 connectRef.on('value', (cr) => {
@@ -266,12 +257,19 @@ function updateConnect(off){
 
 //window handling before unload
 $(window).bind("beforeunload", function() { 
-    if (playerid && !page) updateConnect(-1);
+    beforeLeave();
     //return inFormOrLink ? "Do you really want to close?" : null; 
 })
 
 window.onbeforeunload = function () {
-    return "Are you sure?";
+    beforeLeave();
+}
+
+function beforeLeave() {
+    if (playerid && !page) updateConnect(-1);
+    if (freeTimeout) clearTimeout(freeTimeout);
+    if (endTimeout) clearTimeout(endTimeout);
+    if (isConnect) socket.disconnect();
 }
 
 
