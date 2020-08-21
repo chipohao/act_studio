@@ -58,49 +58,46 @@ function initPage() {
         console.log('images finished loading');
         viewStep.showPrev();
     });
-
+    console.log('init page', page);
     //init page
     if (page) {
-        players.push(new Player(playList[page-1], ()=>{
-            console.log('player num'+(page-1)+'loaded');
-            finish ++;
-            if (waitLoading) intervalCheck();
-        }));
-        $("#menuinner").append(`
-        <button id="player-${page}" type="button" class="btn btn-block btn-dark players">${trackText(page)}</button>
-            `);
+        console.log(page, 'page');
+        players.push(loadPlayer(page-1));
     } else {
         for (let i=0; i<playList.length; i++) {
-            var a;
-            if (Array.isArray(playList[i])) {
-                a = [
-                    new Player(playList[i][0], ()=>{
-                        console.log('player num'+i+'loaded-1');
-                        finish += 0.5;
-                        if (waitLoading) intervalCheck();
-                    }),
-                    new Player(playList[i][1], ()=>{
-                        console.log('player num'+i+'loaded-2');
-                        finish += 0.5;
-                        if (waitLoading) intervalCheck();
-                    })
-                ]
-            }
-            else {
-                a = new Player(playList[i], ()=>{
-                    console.log('player num'+i+'loaded');
-                    finish ++;
-                    if (waitLoading) intervalCheck();
-                });
-            } 
-            players.push(a);
-            $("#menuinner").append(`
-            <button id="player-${i+1}" type="button" class="btn btn-block btn-dark players">${trackText(i+1)}</button>
-            `);
+            players.push(loadPlayer(i));
         }
-        console.log(players);
     }
-    
+    console.log(players);
+}
+
+function loadPlayer(i) {
+    var a;
+    if (Array.isArray(playList[i])) {
+        a = [
+            new Player(playList[i][0], ()=>{
+                console.log('player num'+i+'loaded-1');
+                finish += 0.5;
+                if (waitLoading) intervalCheck();
+            }),
+            new Player(playList[i][1], ()=>{
+                console.log('player num'+i+'loaded-2');
+                finish += 0.5;
+                if (waitLoading) intervalCheck();
+            })
+        ]
+    }
+    else {
+        a = new Player(playList[i], ()=>{
+            console.log('player num'+i+'loaded');
+            finish ++;
+            if (waitLoading) intervalCheck();
+        });
+    } 
+    $("#menuinner").append(`
+    <button id="player-${i+1}" type="button" class="btn btn-block btn-dark players">${trackText(i+1)}</button>
+    `);
+    return a;
 }
 
 $('#start').click(function() {
@@ -140,29 +137,27 @@ function play(time) {
     let text = `<span class="playing">播放中</span>`;
     $("#player-"+playerid).html(text);
     if (changeTrackTimout) clearTimeout(changeTrackTimout);
-    if (page) players[0].play(time);
-    else {
-        //console.log('play'+playerid);
-        //player2.play(time);
-        console.log('in play', time);
-        if (Array.isArray(players[playerid-1])) {
-            if (time < 350) {
-                players[playerid-1][1].pause();
-                players[playerid-1][0].play(time);
-                changeTrackTimout = setTimeout(()=>{
-                    players[playerid-1][0].pause();
-                    players[playerid-1][1].play(0);
-                }, (350-time)*1000);
-            } 
-            else {
-                players[playerid-1][0].pause();
-                players[playerid-1][1].play(time-350);
-            }
-                
-        } else {
-            players[playerid-1].play(time);
+    // if (page) players[0].play(time);
+    // else {
+    let playNum = page ? 0 : playerid-1;
+    if (Array.isArray(players[playNum])) {
+        if (time < 350) {
+            players[playNum][1].pause();
+            players[playNum][0].play(time);
+            changeTrackTimout = setTimeout(()=>{
+                players[playNum][0].pause();
+                players[playNum][1].play(0);
+            }, (350-time)*1000);
+        } 
+        else {
+            players[playNum][0].pause();
+            players[playNum][1].play(time-350);
         }
+            
+    } else {
+        players[playNum].play(time);
     }
+    
     if (freeTimeout) {
         clearTimeout(freeTimeout);
         freeTimeout = null;
@@ -183,16 +178,15 @@ function pause() {
     if (playerid <= 0) return;
     let text = `<span class="playing">等待全員到齊中</span>`;
     $("#player-"+playerid).html(text);
-    if (page) players[0].pause();
-    else {
-        if (Array.isArray(players[playerid-1])) {
-            players[playerid-1][0].pause();
-            players[playerid-1][1].pause();
-        } else {
-            players[playerid-1].pause();
-        }
-    }
+    let playNum = page ? 0 : playerid-1;
 
+    if (Array.isArray(players[playNum])) {
+        players[playNum][0].pause();
+        players[playNum][1].pause();
+    } else {
+        players[playNum].pause();
+    }
+    
     if (changeTrackTimout) {
         clearTimeout(changeTrackTimout);
         changeTrackTimout = null;
