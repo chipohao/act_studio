@@ -32,6 +32,7 @@ let player = new Player(audioFile, ()=>{
     finish++;
     if (waitLoading) intervalCheck();
     //player.play();
+    console.log(player.player.buffer);
 });
 
 let changeState = (e) => {

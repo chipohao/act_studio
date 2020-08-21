@@ -6,9 +6,15 @@ import Player from '@zonesoundcreative/web-player';
 import {freeTimeRef, lengthRef, connectRef, percentRef} from './firebase';
 import NoSleep from 'nosleep.js';
 import emptySound from './sound/empty.wav';
-import aTrack from './sound/A-2.mp3';
-import bTrack from './sound/B-2.mp3';
-import cTrack from './sound/C-2.mp3';
+//import aTrack from './sound/A-2.mp3';
+import aTrack1 from './sound/A-T1.mp3';
+import aTrack2 from './sound/A-T2.mp3';
+//import bTrack from './sound/B-2.mp3';
+import bTrack1 from './sound/B-T1.mp3';
+import bTrack2 from './sound/B-T2.mp3';
+//import cTrack from './sound/C-2.mp3';
+import cTrack1 from './sound/C-T1.mp3';
+import cTrack2 from './sound/C-T2.mp3';
 import io from 'socket.io-client';
 import { socketServer } from './config';
 import queryString from 'query-string';
@@ -23,10 +29,12 @@ let freeTime, length, percent = {};
 //player
 let playerid = 0;
 const player = new Player(emptySound, ()=>{console.log('loaded')});
-var playList = [aTrack, bTrack, cTrack];
+var playList = [[aTrack1, aTrack2], [bTrack1, bTrack2], [cTrack1, cTrack2]];
+//var playList = [aTrack1, aTrack2, bTrack1, bTrack2, cTrack1, cTrack2];
 var players = [];
 let freeTimeout = null;
 let endTimeout = null;
+let changeTrackTimout = null;
 let page;
 
 //other
@@ -63,16 +71,34 @@ function initPage() {
             `);
     } else {
         for (let i=0; i<playList.length; i++) {
-            const a = new Player(playList[i], ()=>{
-                console.log('player num'+i+'loaded');
-                finish ++;
-                if (waitLoading) intervalCheck();
-            });
+            var a;
+            if (Array.isArray(playList[i])) {
+                a = [
+                    new Player(playList[i][0], ()=>{
+                        console.log('player num'+i+'loaded-1');
+                        finish += 0.5;
+                        if (waitLoading) intervalCheck();
+                    }),
+                    new Player(playList[i][1], ()=>{
+                        console.log('player num'+i+'loaded-2');
+                        finish += 0.5;
+                        if (waitLoading) intervalCheck();
+                    })
+                ]
+            }
+            else {
+                a = new Player(playList[i], ()=>{
+                    console.log('player num'+i+'loaded');
+                    finish ++;
+                    if (waitLoading) intervalCheck();
+                });
+            } 
             players.push(a);
             $("#menuinner").append(`
             <button id="player-${i+1}" type="button" class="btn btn-block btn-dark players">${trackText(i+1)}</button>
             `);
         }
+        console.log(players);
     }
     
 }
@@ -89,7 +115,13 @@ $('.players').click(function() {
     //player.start();
     noSleep.enable();
     if (playerid != 0) { // playing
-        players[playerid-1].pause();
+        if (Array.isArray(players[playerid-1])) {
+            players[playerid-1][0].pause();
+            players[playerid-1][1].pause();
+        } else {
+            players[playerid-1].pause();
+        }
+        
         if (!page) updateConnect(-1); 
         $("#player-"+playerid).html(trackText(playerid));
     }
@@ -107,12 +139,29 @@ function play(time) {
     //console.log('change text: playing');
     let text = `<span class="playing">播放中</span>`;
     $("#player-"+playerid).html(text);
-
+    if (changeTrackTimout) clearTimeout(changeTrackTimout);
     if (page) players[0].play(time);
     else {
         //console.log('play'+playerid);
         //player2.play(time);
-        players[playerid-1].play(time);
+        console.log('in play', time);
+        if (Array.isArray(players[playerid-1])) {
+            if (time < 350) {
+                players[playerid-1][1].pause();
+                players[playerid-1][0].play(time);
+                changeTrackTimout = setTimeout(()=>{
+                    players[playerid-1][0].pause();
+                    players[playerid-1][1].play(0);
+                }, (350-time)*1000);
+            } 
+            else {
+                players[playerid-1][0].pause();
+                players[playerid-1][1].play(time-350);
+            }
+                
+        } else {
+            players[playerid-1].play(time);
+        }
     }
     if (freeTimeout) {
         clearTimeout(freeTimeout);
@@ -135,7 +184,19 @@ function pause() {
     let text = `<span class="playing">等待全員到齊中</span>`;
     $("#player-"+playerid).html(text);
     if (page) players[0].pause();
-    else players[playerid-1].pause();
+    else {
+        if (Array.isArray(players[playerid-1])) {
+            players[playerid-1][0].pause();
+            players[playerid-1][1].pause();
+        } else {
+            players[playerid-1].pause();
+        }
+    }
+
+    if (changeTrackTimout) {
+        clearTimeout(changeTrackTimout);
+        changeTrackTimout = null;
+    }
 
     if (freeTimeout) {
         clearTimeout(freeTimeout);
