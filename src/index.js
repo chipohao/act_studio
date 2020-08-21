@@ -1,4 +1,4 @@
-import './loader.css';
+//import './loader.css';
 import './style.css';
 import $ from 'jquery';
 import ViewStep from '@zonesoundcreative/view-step';
