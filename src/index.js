@@ -102,6 +102,7 @@ function loadPlayer(i) {
 
 $('#start').click(function() {
     viewStep.showNext();
+    noSleep.enable();
     console.log('start: loaded?', player.loaded);
     if (player.loaded) { //change to self player
         player.play();
@@ -110,7 +111,7 @@ $('#start').click(function() {
 
 $('.players').click(function() {
     //player.start();
-    noSleep.enable();
+    
     if (playerid != 0) { // playing
         if (Array.isArray(players[playerid-1])) {
             players[playerid-1][0].pause();
@@ -209,6 +210,7 @@ function pageOut() {
     $('#player-'+playerid).html(trackText(playerid));
     if(!page) updateConnect(-1);
     playerid = 0;
+    noSleep.disable();
 }
 
 function reachEnd() {
@@ -216,7 +218,7 @@ function reachEnd() {
     // console.log($('#player-'+playerid));
     // $('#player-'+playerid).html(trackText(playerid));
     //console.log('end!');
-    noSleep.disable();
+    
     endTimeout = null;
     if (playerid != 0){
         socket.emit('ask', {});
