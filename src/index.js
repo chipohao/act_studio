@@ -210,7 +210,7 @@ function pageOut() {
     $('#player-'+playerid).html(trackText(playerid));
     if(!page) updateConnect(-1);
     playerid = 0;
-    noSleep.disable();
+    
 }
 
 function reachEnd() {
@@ -320,6 +320,7 @@ window.onbeforeunload = function () {
 }
 
 function beforeLeave() {
+    noSleep.disable();
     if (playerid && !page) updateConnect(-1);
     if (freeTimeout) clearTimeout(freeTimeout);
     if (endTimeout) clearTimeout(endTimeout);
