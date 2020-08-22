@@ -206,6 +206,7 @@ function pause() {
 function pageOut() {
     viewStep.showPrev();
     viewStep.showPrev(true, true);
+    noSleep.disable();
     $('.players').attr('disabled', false);
     $('#player-'+playerid).html(trackText(playerid));
     if(!page) updateConnect(-1);
@@ -320,7 +321,7 @@ window.onbeforeunload = function () {
 }
 
 function beforeLeave() {
-    noSleep.disable();
+    
     if (playerid && !page) updateConnect(-1);
     if (freeTimeout) clearTimeout(freeTimeout);
     if (endTimeout) clearTimeout(endTimeout);
