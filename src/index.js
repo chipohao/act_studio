@@ -211,7 +211,6 @@ function pageOut() {
     $('#player-'+playerid).html(trackText(playerid));
     if(!page) updateConnect(-1);
     playerid = 0;
-    
 }
 
 function reachEnd() {
