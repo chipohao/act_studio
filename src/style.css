@@ -64,8 +64,8 @@ a {
 #img4 {
     background-image: url(./img/icon-04.png);
 }
-#img5 {
+/* #img5 {
     background-image: url(./img/icon-05.png);
-}
+} */
 
 #loadOverlay{display: none;}

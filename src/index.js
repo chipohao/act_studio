@@ -7,14 +7,24 @@ import {freeTimeRef, lengthRef, connectRef, percentRef} from './firebase';
 import NoSleep from 'nosleep.js';
 import emptySound from './sound/empty.wav';
 //import aTrack from './sound/A-2.mp3';
-import aTrack1 from './sound/A-T1.mp3';
-import aTrack2 from './sound/A-T2.mp3';
+import chaTrack1 from './sound/chA-1-2.mp3';
+import chaTrack2 from './sound/chA-2-2.mp3';
 //import bTrack from './sound/B-2.mp3';
-import bTrack1 from './sound/B-T1.mp3';
-import bTrack2 from './sound/B-T2.mp3';
+import chbTrack1 from './sound/chB-1-2.mp3';
+import chbTrack2 from './sound/chB-2-2.mp3';
 //import cTrack from './sound/C-2.mp3';
-import cTrack1 from './sound/C-T1.mp3';
-import cTrack2 from './sound/C-T2.mp3';
+import chcTrack1 from './sound/chC-1-2.mp3';
+import chcTrack2 from './sound/chC-2-2.mp3';
+
+import enbTrack1 from './sound/enB-1-2.mp3';
+import enbTrack2 from './sound/enB-2-2.mp3';
+
+import taTrack1 from './sound/tA-1-2.mp3';
+import taTrack2 from './sound/tA-2-2.mp3';
+//import bTrack from './sound/B-2.mp3';
+import tbTrack1 from './sound/tB-1-2.mp3';
+import tbTrack2 from './sound/tB-2-2.mp3';
+
 import io from 'socket.io-client';
 import { socketServer } from './config';
 import queryString from 'query-string';
@@ -29,7 +39,7 @@ let freeTime, length, percent = {};
 //player
 let playerid = 0;
 const player = new Player(emptySound, ()=>{console.log('loaded')});
-var playList = [[aTrack1, aTrack2], [bTrack1, bTrack2], [cTrack1, cTrack2]];
+var playList = [[chaTrack1, chaTrack2], [chbTrack1, chbTrack2], [chcTrack1, chcTrack2], [taTrack1, taTrack2], [tbTrack1, tbTrack2], [enbTrack1, enbTrack2]];
 //var playList = [aTrack1, aTrack2, bTrack1, bTrack2, cTrack1, cTrack2];
 var players = [];
 let freeTimeout = null;
@@ -100,7 +110,7 @@ function loadPlayer(i) {
     return a;
 }
 
-$('#start').click(function() {
+$('#start').on('click', function() {
     viewStep.showNext();
     noSleep.enable();
     console.log('start: loaded?', player.loaded);
@@ -109,7 +119,7 @@ $('#start').click(function() {
     }
 })
 
-$('.players').click(function() {
+$('.players').on('click', function() {
     //player.start();
     
     if (playerid != 0) { // playing
@@ -142,17 +152,17 @@ function play(time) {
     // else {
     let playNum = page ? 0 : playerid-1;
     if (Array.isArray(players[playNum])) {
-        if (time < 350) {
+        if (time < 210) {
             players[playNum][1].pause();
             players[playNum][0].play(time);
             changeTrackTimout = setTimeout(()=>{
                 players[playNum][0].pause();
                 players[playNum][1].play(0);
-            }, (350-time)*1000);
+            }, (210-time)*1000);
         } 
         else {
             players[playNum][0].pause();
-            players[playNum][1].play(time-350);
+            players[playNum][1].play(time-210);
         }
             
     } else {
@@ -294,7 +304,17 @@ function calcConnect(cr) {
 }
 
 function trackText(i){
-    return String.fromCharCode('A'.charCodeAt(0)+i-1) + " 軌";
+    let lang = "";
+    if (i < 4) {
+        lang = "中文 ";
+    } else if (i < 6) {
+        lang = "台語 ";
+        i -= 3;
+    } else {
+        lang = "English ";
+        i = 2;
+    }
+    return lang + String.fromCharCode('A'.charCodeAt(0)+i-1);
 }
 
 connectRef.on('value', (cr) => {
