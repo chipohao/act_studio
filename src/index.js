@@ -1,4 +1,4 @@
-import './loader.css';
+//import './loader.css';
 import './style.css';
 import $ from 'jquery';
 import ViewStep from '@zonesoundcreative/view-step';
@@ -6,9 +6,25 @@ import Player from '@zonesoundcreative/web-player';
 import {freeTimeRef, lengthRef, connectRef, percentRef} from './firebase';
 import NoSleep from 'nosleep.js';
 import emptySound from './sound/empty.wav';
-import aTrack from './sound/A-2.mp3';
-import bTrack from './sound/B-2.mp3';
-import cTrack from './sound/C-2.mp3';
+//import aTrack from './sound/A-2.mp3';
+import chaTrack1 from './sound/chA-1-2.mp3';
+import chaTrack2 from './sound/chA-2-2.mp3';
+//import bTrack from './sound/B-2.mp3';
+import chbTrack1 from './sound/chB-1-2.mp3';
+import chbTrack2 from './sound/chB-2-2.mp3';
+//import cTrack from './sound/C-2.mp3';
+import chcTrack1 from './sound/chC-1-2.mp3';
+import chcTrack2 from './sound/chC-2-2.mp3';
+
+import enbTrack1 from './sound/enB-1-2.mp3';
+import enbTrack2 from './sound/enB-2-2.mp3';
+
+import taTrack1 from './sound/tA-1-2.mp3';
+import taTrack2 from './sound/tA-2-2.mp3';
+//import bTrack from './sound/B-2.mp3';
+import tbTrack1 from './sound/tB-1-2.mp3';
+import tbTrack2 from './sound/tB-2-2.mp3';
+
 import io from 'socket.io-client';
 import { socketServer } from './config';
 import queryString from 'query-string';
@@ -23,10 +39,12 @@ let freeTime, length, percent = {};
 //player
 let playerid = 0;
 const player = new Player(emptySound, ()=>{console.log('loaded')});
-var playList = [aTrack, bTrack, cTrack];
+var playList = [[chaTrack1, chaTrack2], [chbTrack1, chbTrack2], [chcTrack1, chcTrack2], [taTrack1, taTrack2], [tbTrack1, tbTrack2], [enbTrack1, enbTrack2]];
+//var playList = [aTrack1, aTrack2, bTrack1, bTrack2, cTrack1, cTrack2];
 var players = [];
 let freeTimeout = null;
 let endTimeout = null;
+let changeTrackTimout = null;
 let page;
 
 //other
@@ -50,46 +68,68 @@ function initPage() {
         console.log('images finished loading');
         viewStep.showPrev();
     });
-
+    console.log('init page', page);
     //init page
     if (page) {
-        players.push(new Player(playList[page-1], ()=>{
-            console.log('player num'+(page-1)+'loaded');
-            finish ++;
-            if (waitLoading) intervalCheck();
-        }));
-        $("#menuinner").append(`
-        <button id="player-${page}" type="button" class="btn btn-block btn-dark players">${trackText(page)}</button>
-            `);
+        console.log(page, 'page');
+        players.push(loadPlayer(page-1));
     } else {
         for (let i=0; i<playList.length; i++) {
-            const a = new Player(playList[i], ()=>{
-                console.log('player num'+i+'loaded');
-                finish ++;
-                if (waitLoading) intervalCheck();
-            });
-            players.push(a);
-            $("#menuinner").append(`
-            <button id="player-${i+1}" type="button" class="btn btn-block btn-dark players">${trackText(i+1)}</button>
-            `);
+            players.push(loadPlayer(i));
         }
     }
-    
+    console.log(players);
 }
 
-$('#start').click(function() {
+function loadPlayer(i) {
+    var a;
+    if (Array.isArray(playList[i])) {
+        a = [
+            new Player(playList[i][0], ()=>{
+                console.log('player num'+i+'loaded-1');
+                finish += 0.5;
+                if (waitLoading) intervalCheck();
+            }),
+            new Player(playList[i][1], ()=>{
+                console.log('player num'+i+'loaded-2');
+                finish += 0.5;
+                if (waitLoading) intervalCheck();
+            })
+        ]
+    }
+    else {
+        a = new Player(playList[i], ()=>{
+            console.log('player num'+i+'loaded');
+            finish ++;
+            if (waitLoading) intervalCheck();
+        });
+    } 
+    $("#menuinner").append(`
+    <button id="player-${i+1}" type="button" class="btn btn-block btn-dark players">${trackText(i+1)}</button>
+    `);
+    return a;
+}
+
+$('#start').on('click', function() {
     viewStep.showNext();
+    noSleep.enable();
     console.log('start: loaded?', player.loaded);
     if (player.loaded) { //change to self player
         player.play();
     }
 })
 
-$('.players').click(function() {
+$('.players').on('click', function() {
     //player.start();
-    noSleep.enable();
+    
     if (playerid != 0) { // playing
-        players[playerid-1].pause();
+        if (Array.isArray(players[playerid-1])) {
+            players[playerid-1][0].pause();
+            players[playerid-1][1].pause();
+        } else {
+            players[playerid-1].pause();
+        }
+        
         if (!page) updateConnect(-1); 
         $("#player-"+playerid).html(trackText(playerid));
     }
@@ -107,13 +147,28 @@ function play(time) {
     //console.log('change text: playing');
     let text = `<span class="playing">播放中</span>`;
     $("#player-"+playerid).html(text);
-
-    if (page) players[0].play(time);
-    else {
-        //console.log('play'+playerid);
-        //player2.play(time);
-        players[playerid-1].play(time);
+    if (changeTrackTimout) clearTimeout(changeTrackTimout);
+    // if (page) players[0].play(time);
+    // else {
+    let playNum = page ? 0 : playerid-1;
+    if (Array.isArray(players[playNum])) {
+        if (time < 210) {
+            players[playNum][1].pause();
+            players[playNum][0].play(time);
+            changeTrackTimout = setTimeout(()=>{
+                players[playNum][0].pause();
+                players[playNum][1].play(0);
+            }, (210-time)*1000);
+        } 
+        else {
+            players[playNum][0].pause();
+            players[playNum][1].play(time-210);
+        }
+            
+    } else {
+        players[playNum].play(time);
     }
+    
     if (freeTimeout) {
         clearTimeout(freeTimeout);
         freeTimeout = null;
@@ -134,8 +189,19 @@ function pause() {
     if (playerid <= 0) return;
     let text = `<span class="playing">等待全員到齊中</span>`;
     $("#player-"+playerid).html(text);
-    if (page) players[0].pause();
-    else players[playerid-1].pause();
+    let playNum = page ? 0 : playerid-1;
+
+    if (Array.isArray(players[playNum])) {
+        players[playNum][0].pause();
+        players[playNum][1].pause();
+    } else {
+        players[playNum].pause();
+    }
+    
+    if (changeTrackTimout) {
+        clearTimeout(changeTrackTimout);
+        changeTrackTimout = null;
+    }
 
     if (freeTimeout) {
         clearTimeout(freeTimeout);
@@ -150,6 +216,7 @@ function pause() {
 function pageOut() {
     viewStep.showPrev();
     viewStep.showPrev(true, true);
+    noSleep.disable();
     $('.players').attr('disabled', false);
     $('#player-'+playerid).html(trackText(playerid));
     if(!page) updateConnect(-1);
@@ -161,7 +228,7 @@ function reachEnd() {
     // console.log($('#player-'+playerid));
     // $('#player-'+playerid).html(trackText(playerid));
     //console.log('end!');
-    noSleep.disable();
+    
     endTimeout = null;
     if (playerid != 0){
         socket.emit('ask', {});
@@ -237,7 +304,17 @@ function calcConnect(cr) {
 }
 
 function trackText(i){
-    return String.fromCharCode('A'.charCodeAt(0)+i-1) + " 軌";
+    let lang = "";
+    if (i < 4) {
+        lang = "中文 ";
+    } else if (i < 6) {
+        lang = "台語 ";
+        i -= 3;
+    } else {
+        lang = "English ";
+        i = 2;
+    }
+    return lang + String.fromCharCode('A'.charCodeAt(0)+i-1);
 }
 
 connectRef.on('value', (cr) => {
@@ -263,6 +340,7 @@ window.onbeforeunload = function () {
 }
 
 function beforeLeave() {
+    
     if (playerid && !page) updateConnect(-1);
     if (freeTimeout) clearTimeout(freeTimeout);
     if (endTimeout) clearTimeout(endTimeout);

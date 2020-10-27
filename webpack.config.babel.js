@@ -29,7 +29,7 @@ module.exports = {
 			use: ['style-loader', 'css-loader'],
 		},
 		{
-			test: /\.(mp3|wav|aif)$/,
+			test: /\.(mp3|wav|ogg)$/,
 			exclude: /(node_modules|bower_components)/,
 			loader: 'file-loader?name=[name].[ext]'
 		},{
@@ -55,6 +55,16 @@ module.exports = {
 		})
 	],
 	optimization: {
-		minimize: true
+		minimize: true,
+		runtimeChunk: 'single',
+		splitChunks: {
+	       	cacheGroups: {
+				vendor: {
+					test: /[\\/]node_modules[\\/]/,
+					name: 'vendors',
+					chunks: 'all',
+				},
+		    },
+        },
 	}
 }
