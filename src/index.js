@@ -288,17 +288,24 @@ function calcConnect(cr) {
     cr.forEach((e)=>{
         if (parseInt(e.val())/total > percent[e.key]) {
             //console.log(e.key, true);
-            $("#player-"+e.key).attr('disabled', true);
-            if (playerid != e.key) {
-                let text = `<span class="full">額滿</span>`;
-                $("#player-"+e.key).html(text);
-            }
+            let ids = trackToId(e.key);
+            ids.forEach((id) => {
+                $("#player-"+id).attr('disabled', true);
+                if (playerid != id) {
+                    let text = `<span class="full">額滿 FULL</span>`;
+                    $("#player-"+id).html(text);
+                }
+            })
         } else {
             //console.log(e.key, false);
-            if (playerid != e.key) {
-                $("#player-"+e.key).attr('disabled', false);
-                $("#player-"+e.key).html(trackText(parseInt(e.key)));
-            }
+            let ids = trackToId(e.key);
+            ids.forEach((id) => {
+                if (playerid != id) {
+                    $("#player-"+id).attr('disabled', false);
+                    $("#player-"+id).html(trackText(parseInt(id)));
+                }
+            })
+            
         }
     })
 }
@@ -323,9 +330,28 @@ connectRef.on('value', (cr) => {
 });
 
 function updateConnect(off){
-    connectRef.child(playerid).transaction(function (current_value) {
+    connectRef.child(idToTrack(playerid)).transaction(function (current_value) {
         return (current_value || 0) + off;
     });
+}
+
+function idToTrack(id) {
+    if (id >= 4 && id < 6) {
+        id -= 3;
+    } else {
+        id = 2;
+    }
+    return id;
+}
+
+function trackToId(track) {
+    if (track == 1) {
+        return [1, 4];
+    } else if (track == 2) {
+        return [2, 5, 6];
+    } else {
+        return [3];
+    }
 }
 
 

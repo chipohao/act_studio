@@ -10,6 +10,7 @@ import audioFile from './sound/chA.mp3';
 
 import io from 'socket.io-client';
 import { socketServer } from './config';
+const numbers = ["中文 A", "中文 B", "中文 C", "台語 A", "台語 C", "英文 B"]
 
 //socket use
 var socket = io(socketServer);
