@@ -100,7 +100,7 @@ percentRef.on('value', (pr) => {
         percent[e.key] = parseFloat(e.val());
         if (percentFirst) {
             html += `
-            <label for="percent-${e.key}" style="margin-right: 20px;">${String.fromCharCode('A'.charCodeAt(0)+parseInt(e.key)-1)}</label>
+            <label for="percent-${e.key}" style="margin-right: 20px;">${numbers[parseInt(e.key)-1]}</label>
             <input type="number" id="percent-${e.key}" value=${parseFloat(e.val())} step="0.01" min="0" max="1"></input><br>`;
         } else {
             $('#percent-'+e.key).val(parseFloat(e.val()));
@@ -141,7 +141,7 @@ function setConnect() {
     for (let k in connect) {
         
         html += `
-        <span for="connect-${k}" style="margin-right: 20px;">${String.fromCharCode('A'.charCodeAt(0)+parseInt(k)-1)}: </label>
+        <span for="connect-${k}" style="margin-right: 20px;">${numbers[parseInt(k)-1]}: </label>
         <span id="connect-${k}">${connect[k]}人</input>
         <span style="margin-left:10px;">(${totalConnect == 0 ? totalConnect : connect[k]*100/totalConnect}%)</span>
         <br>`;
