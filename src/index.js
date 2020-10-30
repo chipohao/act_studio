@@ -100,17 +100,17 @@ function loadPlayer(i) {
         a = [
             new Player(playList[i][0], ()=>{
                 console.log('player num'+i+'loaded-1');
-                finish += 0.3;
+                finish += 1;
                 if (waitLoading) intervalCheck();
             }),
             new Player(playList[i][1], ()=>{
                 console.log('player num'+i+'loaded-2');
-                finish += 0.3;
+                finish += 1;
                 if (waitLoading) intervalCheck();
             }),
             new Player(playList[i][2], ()=>{
                 console.log('player num'+i+'loaded-3');
-                finish += 0.4;
+                finish += 1;
                 if (waitLoading) intervalCheck();
             })
         ]
@@ -274,6 +274,7 @@ function loading() {
 }
 
 function intervalCheck() {
+    console.log('check:', finish);
     waitLoading = false;
     if (!isConnect) {
         //alert('isConnect'); 
@@ -285,7 +286,9 @@ function intervalCheck() {
         waitLoading = true;
         return;
     }
-    if ((page==undefined) && finish < players.length) {
+    let mul = 1;
+    if (Array.isArray(players[0])) mul = players[0].length;
+    if ((page==undefined) && finish < players.length * mul) {
         //alert('all');
         waitLoading = true;
         return;
