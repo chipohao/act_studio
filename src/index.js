@@ -179,6 +179,11 @@ function play(time) {
                 players[playNum][2].pause();
                 players[playNum][0].pause();
                 players[playNum][1].play(0);
+                changeTrackTimout = setTimeout(()=>{
+                    players[playNum][0].pause();
+                    players[playNum][1].pause();
+                    players[playNum][2].play(0);
+                }, 150*1000);
             }, (150-time)*1000);
         } 
         else if (time < 300) {

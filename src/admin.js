@@ -180,8 +180,8 @@ socket.on('connect', (data) => {
     socket.on('play', (msg)=> {
         console.log('play', msg);
         //play(msg.time);
-        playerUI.activeStart();
         player.play(parseInt(msg.time));
+        playerUI.activeStart();
         playerUI.play(parseFloat(msg.time));
     });
 
