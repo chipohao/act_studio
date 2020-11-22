@@ -33,14 +33,14 @@
   },
   "dependencies": {
     "@zonesoundcreative/view-step": "0.0.6",
-    "@zonesoundcreative/web-player": "0.0.3",
+    "@zonesoundcreative/web-player": "0.0.5",
     "firebase": "^7.16.0",
     "html-webpack-plugin": "^4.3.0",
     "jquery": "^3.5.0",
     "nosleep.js": "^0.11.0",
     "query-string": "^6.13.1",
     "socket.io-client": "^2.3.0",
-    "tone": "^13.8.25"
+    "tone": "^14.7.58"
   },
   "author": "",
   "license": "ISC"

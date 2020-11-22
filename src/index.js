@@ -7,23 +7,31 @@ import {freeTimeRef, lengthRef, connectRef, percentRef} from './firebase';
 import NoSleep from 'nosleep.js';
 import emptySound from './sound/empty.wav';
 //import aTrack from './sound/A-2.mp3';
-import chaTrack1 from './sound/chA-1-2.mp3';
-import chaTrack2 from './sound/chA-2-2.mp3';
+import chaTrack1 from './sound/chA-1.mp3';
+import chaTrack2 from './sound/chA-2.mp3';
+import chaTrack3 from './sound/chA-3.mp3';
+
 //import bTrack from './sound/B-2.mp3';
-import chbTrack1 from './sound/chB-1-2.mp3';
-import chbTrack2 from './sound/chB-2-2.mp3';
+import chbTrack1 from './sound/chB-1.mp3';
+import chbTrack2 from './sound/chB-2.mp3';
+import chbTrack3 from './sound/chB-3.mp3';
+
 //import cTrack from './sound/C-2.mp3';
-import chcTrack1 from './sound/chC-1-2.mp3';
-import chcTrack2 from './sound/chC-2-2.mp3';
+import chcTrack1 from './sound/chC-1.mp3';
+import chcTrack2 from './sound/chC-2.mp3';
+import chcTrack3 from './sound/chC-3.mp3';
 
-import enbTrack1 from './sound/enB-1-2.mp3';
-import enbTrack2 from './sound/enB-2-2.mp3';
+import enbTrack1 from './sound/enB-1.mp3';
+import enbTrack2 from './sound/enB-2.mp3';
+import enbTrack3 from './sound/enB-3.mp3';
 
-import taTrack1 from './sound/tA-1-2.mp3';
-import taTrack2 from './sound/tA-2-2.mp3';
+import taTrack1 from './sound/tA-1.mp3';
+import taTrack2 from './sound/tA-2.mp3';
+import taTrack3 from './sound/tA-3.mp3';
 //import bTrack from './sound/B-2.mp3';
-import tbTrack1 from './sound/tB-1-2.mp3';
-import tbTrack2 from './sound/tB-2-2.mp3';
+import tbTrack1 from './sound/tB-1.mp3';
+import tbTrack2 from './sound/tB-2.mp3';
+import tbTrack3 from './sound/tB-3.mp3';
 
 import io from 'socket.io-client';
 import { socketServer } from './config';
@@ -39,7 +47,12 @@ let freeTime, length, percent = {};
 //player
 let playerid = 0;
 const player = new Player(emptySound, ()=>{console.log('loaded')});
-var playList = [[chaTrack1, chaTrack2], [chbTrack1, chbTrack2], [chcTrack1, chcTrack2], [taTrack1, taTrack2], [tbTrack1, tbTrack2], [enbTrack1, enbTrack2]];
+var playList = [[chaTrack1, chaTrack2, chaTrack3 ], 
+                [chbTrack1, chbTrack2, chbTrack3], 
+                [chcTrack1, chcTrack2, chcTrack3], 
+                [taTrack1, taTrack2, taTrack3], 
+                [tbTrack1, tbTrack2, tbTrack3], 
+                [enbTrack1, enbTrack2, enbTrack3]];
 //var playList = [aTrack1, aTrack2, bTrack1, bTrack2, cTrack1, cTrack2];
 var players = [];
 let freeTimeout = null;
@@ -87,12 +100,17 @@ function loadPlayer(i) {
         a = [
             new Player(playList[i][0], ()=>{
                 console.log('player num'+i+'loaded-1');
-                finish += 0.5;
+                finish += 1;
                 if (waitLoading) intervalCheck();
             }),
             new Player(playList[i][1], ()=>{
                 console.log('player num'+i+'loaded-2');
-                finish += 0.5;
+                finish += 1;
+                if (waitLoading) intervalCheck();
+            }),
+            new Player(playList[i][2], ()=>{
+                console.log('player num'+i+'loaded-3');
+                finish += 1;
                 if (waitLoading) intervalCheck();
             })
         ]
@@ -126,6 +144,7 @@ $('.players').on('click', function() {
         if (Array.isArray(players[playerid-1])) {
             players[playerid-1][0].pause();
             players[playerid-1][1].pause();
+            players[playerid-1][2].pause();
         } else {
             players[playerid-1].pause();
         }
@@ -152,17 +171,35 @@ function play(time) {
     // else {
     let playNum = page ? 0 : playerid-1;
     if (Array.isArray(players[playNum])) {
-        if (time < 210) {
+        if (time < 150) {
+            players[playNum][2].pause();
             players[playNum][1].pause();
             players[playNum][0].play(time);
             changeTrackTimout = setTimeout(()=>{
+                players[playNum][2].pause();
                 players[playNum][0].pause();
                 players[playNum][1].play(0);
-            }, (210-time)*1000);
+                changeTrackTimout = setTimeout(()=>{
+                    players[playNum][0].pause();
+                    players[playNum][1].pause();
+                    players[playNum][2].play(0);
+                }, 150*1000);
+            }, (150-time)*1000);
         } 
-        else {
+        else if (time < 300) {
+            players[playNum][2].pause();
             players[playNum][0].pause();
-            players[playNum][1].play(time-210);
+            players[playNum][1].play(time-150);
+            changeTrackTimout = setTimeout(()=>{
+                players[playNum][0].pause();
+                players[playNum][1].pause();
+                players[playNum][2].play(0);
+            }, (300-time)*1000);
+        }
+        else{
+            players[playNum][0].pause();
+            players[playNum][1].pause();
+            players[playNum][2].play(time-300);
         }
             
     } else {
@@ -194,6 +231,7 @@ function pause() {
     if (Array.isArray(players[playNum])) {
         players[playNum][0].pause();
         players[playNum][1].pause();
+        players[playNum][2].pause();
     } else {
         players[playNum].pause();
     }
@@ -241,6 +279,7 @@ function loading() {
 }
 
 function intervalCheck() {
+    console.log('check:', finish);
     waitLoading = false;
     if (!isConnect) {
         //alert('isConnect'); 
@@ -252,7 +291,9 @@ function intervalCheck() {
         waitLoading = true;
         return;
     }
-    if ((page==undefined) && finish < players.length) {
+    let mul = 1;
+    if (Array.isArray(players[0])) mul = players[0].length;
+    if ((page==undefined) && finish < players.length * mul) {
         //alert('all');
         waitLoading = true;
         return;
@@ -288,17 +329,26 @@ function calcConnect(cr) {
     cr.forEach((e)=>{
         if (parseInt(e.val())/total > percent[e.key]) {
             //console.log(e.key, true);
-            $("#player-"+e.key).attr('disabled', true);
-            if (playerid != e.key) {
-                let text = `<span class="full">額滿</span>`;
-                $("#player-"+e.key).html(text);
+            //let ids = trackToId(e.key);
+            //ids.forEach((id) => {
+            let id = e.key;
+            $("#player-"+id).attr('disabled', true);
+            if (playerid != id) {
+                let text = `<span class="full">額滿 FULL</span>`;
+                $("#player-"+id).html(text);
             }
+            //})
         } else {
             //console.log(e.key, false);
-            if (playerid != e.key) {
-                $("#player-"+e.key).attr('disabled', false);
-                $("#player-"+e.key).html(trackText(parseInt(e.key)));
+            //let ids = trackToId(e.key);
+            //ids.forEach((id) => {
+            let id = e.key;
+            if (playerid != id) {
+                $("#player-"+id).attr('disabled', false);
+                $("#player-"+id).html(trackText(parseInt(id)));
             }
+            //})
+            
         }
     })
 }
@@ -327,7 +377,6 @@ function updateConnect(off){
         return (current_value || 0) + off;
     });
 }
-
 
 //window handling before unload
 $(window).bind("beforeunload", function() { 

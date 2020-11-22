@@ -12,6 +12,11 @@
     align-items: center;
 }
 
+#menupage_c {
+    height: 100%;
+    align-items: center;
+}
+
 #menuinner {
     width:100%;
 }
